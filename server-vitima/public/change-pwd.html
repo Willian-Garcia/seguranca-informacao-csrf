@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Alterar Senha</title>
+  </head>
+  <body>
+    <h2>Alterar Senha</h2>
+    <form id="form-change-password">
+      <label for="currentPassword">Senha atual:</label><br />
+      <input type="password" id="currentPassword" required /><br /><br />
+
+      <label for="password">Nova senha:</label><br />
+      <input type="password" id="password" required /><br /><br />
+
+      <button type="submit">Alterar</button>
+    </form>
+
+    <p id="status"></p>
+
+    <script>
+      const form = document.getElementById("form-change-password");
+      const status = document.getElementById("status");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const currentPassword = document.getElementById("currentPassword").value;
+        const password = document.getElementById("password").value;
+
+        const response = await fetch("/change-password-exer03", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include", // para enviar o cookie
+          body: JSON.stringify({ currentPassword, password })
+        });
+
+        const data = await response.json();
+        status.textContent = data.message || data.error;
+        status.style.color = response.ok ? "green" : "red";
+      });
+    </script>
+  </body>
+</html>
