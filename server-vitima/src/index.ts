@@ -3,57 +3,70 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import path from "path";
-import router from "./routes";
+import { doubleCsrf } from "csrf-csrf";
+import routerFactory from "./routes";
 
-// Carrega as variáveis de ambiente definidas no arquivo .env
 dotenv.config();
 
-// Inicializa a aplicação Express
 const app = express();
+const PORT = process.env.PORT || 3001;
 
-// Define a porta utilizada pelo servidor
-const PORT = process.env.PORT || 3000;
-
-// Middleware para permitir o envio de dados em formato JSON no corpo das requisições
 app.use(express.json());
-// Middleware para permitir o envio de dados em formato URL-encoded no corpo das requisições
 app.use(express.urlencoded({ extended: true }));
-
-// Middleware para cookies
 app.use(cookieParser());
 
-// Middleware para habilitar requisições de diferentes origens (CORS)
 app.use(cors({
-  origin: "http://vitima.local:3001", // Permite requisições apenas do domínio da vítima
-  credentials: true // Permite o envio de cookies entre domínios
+  origin: "http://vitima.local:3001",
+  credentials: true
 }));
 
-// Middleware para servir arquivos estáticos a partir do diretório "public"
-app.use(express.static("public"));
-
-// Inicializa o servidor na porta definida
-// Edite o arquivo hosts no seu sistema operacional:
-// C:\Windows\System32\drivers\etc\hosts
-// Adicione as linhas:
-// 127.0.0.1   vitima.local
-// 127.0.0.1   atacante.local
-// Isso permitirá acessar o servidor via http://vitima.local:3001
-app.listen(PORT, function () {
-  console.log(`Servidor rodando em http://vitima.local:${PORT}`);
+// ✅ Configuração do CSRF com todos os campos obrigatórios
+const csrfTools = doubleCsrf({
+  getSecret: () => process.env.CSRF_SECRET || "supersecretkey",
+  getSessionIdentifier: (req) => req.cookies.user || "anon",
+  cookieName: "XSRF-TOKEN",
+  cookieOptions: {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: false
+  },
+  getCsrfTokenFromRequest: (req) => req.headers["x-csrf-token"] as string
 });
 
-// ****** ROTA PARA PÁGINA HTML ESTÁTICA ******
+const doubleCsrfProtection = csrfTools.doubleCsrfProtection;
+const generateToken = (req: Request, res: Response) => csrfTools.generateCsrfToken(req, res);
+
+// Endpoint para fornecer token CSRF ao frontend legítimo
+app.get("/csrf-token", (req: Request, res: Response) => {
+  const csrfToken = generateToken(req, res);
+  res.json({ csrfToken });
+});
+
+// Servir páginas
+app.use(express.static("public"));
+
 app.get("/", (_: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "..", "public", "login.html"));
 });
 
-// Resposta do Exercício 3
-app.get("/change-pwd", (_: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "..", "public", "change-pwd.html"));
+app.get("/home", (_: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "..", "public", "home.html"));
 });
 
-app.use("/", router);
+app.get("/contact", (_: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "..", "public", "contact.html"));
+});
 
-app.use(function (_: Request, res: Response) {
-  res.status(404).json({error: "Rota não encontrada"});
+app.get("/change-password", (_: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "..", "public", "change-password.html"));
+});
+
+app.use("/", routerFactory(doubleCsrfProtection));
+
+app.use((_: Request, res: Response) => {
+  res.status(404).json({ error: "Rota não encontrada" });
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor vítima rodando em http://vitima.local:${PORT}`);
 });

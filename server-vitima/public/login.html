@@ -1,55 +1,50 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Login</title>
-  </head>
-  <body>
-    <h1>Login</h1>
-    <form id="login-form">
-      <label for="username">Usuário:</label><br />
-      <input type="text" id="username" name="username" required /><br /><br />
-      <label for="password">Senha:</label><br />
-      <input type="password" id="password" name="password" required /><br /><br />
-      <button type="submit">Entrar</button>
-    </form>
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="login-form">
+    <label for="username">Usuário:</label><br />
+    <input type="text" id="username" name="username" required /><br /><br />
+    <label for="password">Senha:</label><br />
+    <input type="password" id="password" name="password" required /><br /><br />
+    <button type="submit">Entrar</button>
+  </form>
+  <p id="status"></p>
 
-    <p id="status"></p>
+  <script>
+    const form = document.getElementById("login-form");
+    const status = document.getElementById("status");
 
-    <script>
-      const form = document.getElementById("login-form");
-      const status = document.getElementById("status");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
 
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
+      try {
+        const response = await fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+          credentials: "include"
+        });
 
-        try {
-          const response = await fetch("/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ username, password }),
-            credentials: "include" // Importante para permitir envio/recebimento de cookies
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            status.textContent = data.message;
-            status.style.color = "green";
-          } else {
-            status.textContent = data.error || "Erro ao fazer login.";
-            status.style.color = "red";
-          }
-        } catch (err) {
-          status.textContent = "Falha na requisição.";
+        const data = await response.json();
+        if (response.ok) {
+          window.location.href = "/home";
+        } else {
+          status.textContent = data.error || "Erro no login.";
           status.style.color = "red";
         }
-      });
-    </script>
-  </body>
+      } catch (err) {
+        status.textContent = "Falha na requisição.";
+        status.style.color = "red";
+      }
+    });
+  </script>
+</body>
 </html>
