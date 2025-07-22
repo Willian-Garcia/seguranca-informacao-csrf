@@ -22,6 +22,18 @@ app.listen(PORT, function () {
   console.log(`Servidor rodando em http://atacante.local:${PORT}`);
 });
 
+app.get("/", (_: Request, res: Response) => {
+  console.log("[SERVER-ATAQUE] Acessando página inicial com os exemplos de ataque.");
+  res.send(`
+    <h1>Simulador de Ataques CSRF</h1>
+    <ul>
+      <li><a href="/csrf-get-attack">🔗 Ataque GET</a></li>
+      <li><a href="/csrf-post-attack">📤 Ataque POST Inseguro</a></li>
+      <li><a href="/csrf-post-attack-seguro">🛡️ Ataque POST Simulado Seguro</a></li>
+    </ul>
+  `);
+});
+
 // ****** ROTAS PARA PÁGINAS HTML ESTÁTICAS ******
 app.get("/csrf-get-attack", (_: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "..", "public", "csrf-get-attack.html"));
